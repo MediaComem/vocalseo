@@ -1,36 +1,49 @@
-html
-  head
-    title= 'Vocalseo'
-    script(type="text/javascript").
-      document.addEventListener("DOMContentLoaded", () => {
-        const languageCodeSelector = document.querySelector('#languageCode')
-        const languageNameSelector = document.querySelector('#languageName')
-
-        const getLanguages = (lang) => {
-          const url = new URL("/languages",window.location.href)
-          url.searchParams.append('lang',lang)
-          fetch(url)
-            .then(response => response.json())
-            .then(body => {
-              body.voices.forEach(function(element,key) {
-                languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
-              });
-            })
-        }
-
-        getLanguages(languageCodeSelector[0].value)
-
-        languageCodeSelector.addEventListener('change', (e) => { 
-          getLanguages(e.target.value)
-        })
-      })
-  body
-    h1= 'Vocalseo'
-    form(action="/postqueries" method="POST")
-      textarea(rows="50" cols="50" name="textQueries" required)
-      select(name='LanguageCode' id='languageCode')
+extends default
+block content
+  h1 Personnal assistants 🤖 || Queries builder
+  p This tool helps to build queries for 
+    each val, index in assistants
+      if index != assistants.length-1
+        | #{val.assistant},&nbsp;
+      else 
+        | #{val.assistant}.
+  form(action="/postqueries" method="POST")
+    .form-group
+      label.form-label(for="textQueries") Queries (queries have to be semicolon separated)
+      textarea.form-input(rows="20" cols="50" name="textQueries" placeholder='First query; Second query;' required)
+    .form-group.col-3.col-sm-12
+      label.form-label(for="languageCode") Language Code
+      select.form-select(name='LanguageCode' id='languageCode')
         option(value="fr") FR
         option(value="en") EN
-      select(name='LanguageName' id='languageName')
-        
-      input(type="submit" value="submit")
+    .form-group.col-3.col-sm-12
+      label.form-label(for="languageName") Voice Name (
+        a(href="https://cloud.google.com/text-to-speech/docs/voices") supported voices
+        | )
+      select.form-select(name='LanguageName' id='languageName')
+    .divider
+    button.btn(type="submit") Submit
+
+  script(type="text/javascript").
+    document.addEventListener("DOMContentLoaded", () => {
+      const languageCodeSelector = document.querySelector('#languageCode')
+      const languageNameSelector = document.querySelector('#languageName')
+
+      const getLanguages = (lang) => {
+        const url = new URL("/languages",window.location.href)
+        url.searchParams.append('lang',lang)
+        fetch(url)
+          .then(response => response.json())
+          .then(body => {
+            body.voices.forEach(function(element,key) {
+              languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
+            });
+          })
+      }
+
+      getLanguages(languageCodeSelector[0].value)
+
+      languageCodeSelector.addEventListener('change', (e) => { 
+        getLanguages(e.target.value)
+      })
+    })
