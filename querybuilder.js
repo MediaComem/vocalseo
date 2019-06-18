@@ -8,12 +8,7 @@ const port = 3000;
 const { zip } = require('zip-a-folder');
 const moment = require('moment');
 
-const brands = ['Rolex','Omega','Cartier'];
 const assistants = [{assistant:'Google',ask:'Ok Google,'},{assistant:'Alexa',ask:'Alexa,'},{assistant:'Siri',ask:'Hey Siri,'}];
-
-const languageCode = 'en-GB';
-const languageName = 'en-GB-Wavenet-C';
-
 
 async function buildQueries(folder,question,voice) {
   // Creates a client
@@ -60,7 +55,7 @@ app.get('/languages', async function (req, res) {
 })
 
 app.get('/', function (req, res) {
-  res.render('index', {});
+  res.render('index', {title: 'VocalSEO | Voice generator',assistants: assistants});
 })
 
 app.post('/postqueries', async function (req, res) {
@@ -86,7 +81,7 @@ app.post('/postqueries', async function (req, res) {
 		}
 	}
 	console.log(`${outputs}/${folderName}.zip`)
-	res.render('download', {zip:`${folderName}.zip`});
+	res.render('download', {title: 'VocalSEO | Download folder', zip:`${folderName}.zip`});
 })
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
