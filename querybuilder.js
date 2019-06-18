@@ -9,7 +9,7 @@ const { zip } = require('zip-a-folder');
 const moment = require('moment');
 
 const brands = ['Rolex','Omega','Cartier'];
-const assistants = ['Ok Google,','Alexa,','Hey Siri,'];
+const assistants = [{assistant:'Google',ask:'Ok Google,'},{assistant:'Alexa',ask:'Alexa,'},{assistant:'Siri',ask:'Hey Siri,'}];
 
 const languageCode = 'en-GB';
 const languageName = 'en-GB-Wavenet-C';
@@ -42,6 +42,7 @@ async function buildQueries(folder,question) {
 app.set('views', './views');
 app.set('view engine', 'pug');
 app.use(express.urlencoded());
+app.use(express.static('outputs'))
 
 app.get('/', function (req, res) {
   res.render('index', {});
@@ -55,15 +56,15 @@ app.post('/postqueries', async function (req, res) {
 	await fs.mkdir(`${outputs}/${folderName}`)
 	
 	for(const assistant of assistants){
-		const subFolderName = assistant;
+		const subFolderName = assistant.assistant;
 		await fs.mkdir(`${outputs}/${folderName}/${subFolderName}`)
 		for (const query of queries) {
-			await buildQueries(`${outputs}/${folderName}/${subFolderName}`,assistant+' '+query);
+			await buildQueries(`${outputs}/${folderName}/${subFolderName}`,`${assistant.ask} ${query}`);
 			await zip(`${outputs}/${folderName}`, `${outputs}/${folderName}.zip`);
 		}
 	}
 	console.log(`${outputs}/${folderName}.zip`)
-	res.send({response:`${outputs}/${folderName}.zip`});
+	res.render('download', {zip:`${folderName}.zip`});
 })
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
