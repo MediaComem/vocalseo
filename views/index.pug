@@ -1,0 +1,9 @@
+html
+  head
+    title= 'Vocalseo'
+  body
+    h1= 'Vocalseo'
+    form(action="/postqueries" method="POST")
+      textarea(rows="50" cols="50" name="textQueries")
+      input(type="text" name="username")
+      input(type="submit" value="submit")

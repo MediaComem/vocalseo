@@ -1,13 +1,17 @@
 const fetch = require('node-fetch');
 const textToSpeech = require('@google-cloud/text-to-speech');
-const fs = require('fs');
 const util = require('util');
+const fs = require('fs-extra');
+const express = require('express');
+const app = express();
+const port = 3000;
 
 const brands = ['Rolex','Omega','Cartier'];
 const assistants = ['Ok Google,','Alexa,','Hey Siri,'];
 
 const languageCode = 'en-GB';
 const languageName = 'en-GB-Wavenet-C';
+
 
 async function main(question) {
   // Creates a client
@@ -28,26 +32,26 @@ async function main(question) {
   // Performs the Text-to-Speech request
   const [response] = await client.synthesizeSpeech(request);
   // Write the binary audio content to a local file
-  const writeFile = util.promisify(fs.writeFile);
-  await writeFile('outputs/'+question+'.mp3', response.audioContent, 'binary');
+  await fs.writeFile('outputs/'+question+'.mp3', response.audioContent, 'binary');
   console.log('Audio content written to file: output-'+question+'.mp3');
 }
 
-const questionsBuilder = (brands) =>{
-	let questions = [];
-	brands.forEach((brand) => {
-		questions.push(`Can I buy a ${brand} watch online ?`);
-		questions.push(`Should I buy a, ${brand} ,watch?`);
-		questions.push(`${brand} watch boutique in Lausanne ?`)
-		questions.push(`Where is the ${brand} watch boutique in New-York city ?`)
-	})
-	return questions
-}
+app.set('views', './views');
+app.set('view engine', 'pug');
+app.use(express.urlencoded());
 
-const questions = questionsBuilder(brands);
-
-assistants.forEach((assistant) => {
-	questions.forEach((question) => {
-		main(assistant+' '+question);
-	})
+app.get('/', function (req, res) {
+  res.render('index', {});
 })
+
+app.post('/postqueries', function (req, res) {
+	const queries = req.body.textQueries.split(';');
+	for(const assistant of assistants){
+		for (const query of queries) {
+			main(assistant+' '+query);
+		}
+	}
+	console.log('Finish')
+	res.send({response:'ok'});
+})
+app.listen(port, () => console.log(`Example app listening on port ${port}!`));
