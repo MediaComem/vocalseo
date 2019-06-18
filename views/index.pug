@@ -1,9 +1,37 @@
 html
   head
     title= 'Vocalseo'
+    script(type="text/javascript").
+      document.addEventListener("DOMContentLoaded", () => {
+        const languageCodeSelector = document.querySelector('#languageCode')
+        const languageNameSelector = document.querySelector('#languageName')
+
+        const getLanguages = (lang) => {
+          const url = new URL("/languages",window.location.href)
+          url.searchParams.append('lang',lang)
+          fetch(url)
+            .then(response => response.json())
+            .then(body => {
+              body.voices.forEach(function(element,key) {
+                languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
+              });
+            })
+        }
+
+        getLanguages(languageCodeSelector[0].value)
+        
+        languageCodeSelector.addEventListener('change', (e) => { 
+          getLanguages(e.target.value)
+        })
+      })
   body
     h1= 'Vocalseo'
     form(action="/postqueries" method="POST")
       textarea(rows="50" cols="50" name="textQueries")
       input(type="text" name="username")
+      select(name='LanguageCode' id='languageCode')
+        option(value="fr") FR
+        option(value="en") EN
+      select(name='LanguageName' id='languageName')
+        
       input(type="submit" value="submit")

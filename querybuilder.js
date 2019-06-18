@@ -15,7 +15,7 @@ const languageCode = 'en-GB';
 const languageName = 'en-GB-Wavenet-C';
 
 
-async function buildQueries(folder,question) {
+async function buildQueries(folder,question,voice) {
   // Creates a client
   const client = new textToSpeech.TextToSpeechClient();
 
@@ -26,7 +26,7 @@ async function buildQueries(folder,question) {
   const request = {
     input: {text: text},
     // Select the language and SSML Voice Gender (optional)
-    voice: {languageCode: languageCode, languageName: languageName, ssmlGender: 'FEMALE'},
+    voice: {languageCode: voice.languageCodes[0], languageName: voice.name, ssmlGender: voice.ssmlGender},
     // Select the type of audio encoding
     audioConfig: {audioEncoding: 'MP3'},
   };
@@ -39,10 +39,25 @@ async function buildQueries(folder,question) {
   return
 }
 
+async function listAvailableVoices(languageCode) {
+  const textToSpeech = require('@google-cloud/text-to-speech');
+	const client = new textToSpeech.TextToSpeechClient();
+
+	const [result] = await client.listVoices({languageCode:languageCode});
+	const voices = result.voices;
+
+	return voices
+}
+
 app.set('views', './views');
 app.set('view engine', 'pug');
 app.use(express.urlencoded());
 app.use(express.static('outputs'))
+
+app.get('/languages', async function (req, res) {
+	const voices = await listAvailableVoices(req.query.lang)
+  res.json({voices});
+})
 
 app.get('/', function (req, res) {
   res.render('index', {});
@@ -51,6 +66,8 @@ app.get('/', function (req, res) {
 app.post('/postqueries', async function (req, res) {
 	const queries = req.body.textQueries.split(';');
 	const outputs = 'outputs';
+	const voices = await listAvailableVoices(req.body.LanguageCode)
+	const voice = voices[req.body.LanguageName]
 	//Create main folder
 	const folderName = moment().format('YYYYMMDDhhmmssSS')
 	await fs.mkdir(`${outputs}/${folderName}`)
@@ -59,7 +76,7 @@ app.post('/postqueries', async function (req, res) {
 		const subFolderName = assistant.assistant;
 		await fs.mkdir(`${outputs}/${folderName}/${subFolderName}`)
 		for (const query of queries) {
-			await buildQueries(`${outputs}/${folderName}/${subFolderName}`,`${assistant.ask} ${query}`);
+			await buildQueries(`${outputs}/${folderName}/${subFolderName}`,`${assistant.ask} ${query}`,voice);
 			await zip(`${outputs}/${folderName}`, `${outputs}/${folderName}.zip`);
 		}
 	}
