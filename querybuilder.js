@@ -64,7 +64,12 @@ app.get('/', function (req, res) {
 })
 
 app.post('/postqueries', async function (req, res) {
-	const queries = req.body.textQueries.split(';');
+	let queries = req.body.textQueries.replace(/\n/g, '').replace(/\r/g, '').split(';');
+	console.log(queries)
+	queries = queries.filter(function (el) {
+  	return el != '';
+	});
+	console.log(queries)
 	const outputs = 'outputs';
 	const voices = await listAvailableVoices(req.body.LanguageCode)
 	const voice = voices[req.body.LanguageName]

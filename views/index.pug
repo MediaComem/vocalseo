@@ -19,7 +19,7 @@ html
         }
 
         getLanguages(languageCodeSelector[0].value)
-        
+
         languageCodeSelector.addEventListener('change', (e) => { 
           getLanguages(e.target.value)
         })
@@ -27,8 +27,7 @@ html
   body
     h1= 'Vocalseo'
     form(action="/postqueries" method="POST")
-      textarea(rows="50" cols="50" name="textQueries")
-      input(type="text" name="username")
+      textarea(rows="50" cols="50" name="textQueries" required)
       select(name='LanguageCode' id='languageCode')
         option(value="fr") FR
         option(value="en") EN
