@@ -10,14 +10,14 @@ const { zip } = require('zip-a-folder');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
 
-new CronJob('0 */1 * * * *', async function() {
+new CronJob('0 0 3 * * *', async function() {
   console.log(moment().format()+' Start CronJob to remove audio files generated');
   await removeFiles('./outputs')
 }, null, true, 'Europe/Paris');
 
 const assistants = [{assistant:'Google',ask:'Ok Google,'},{assistant:'Alexa',ask:'Alexa,'},{assistant:'Siri',ask:'Hey Siri,'}];
 
-async function buildQueries(folder,question,voice) {
+async function queryBuilder(index,folder,question,voice) {
   // Creates a client
   const client = new textToSpeech.TextToSpeechClient();
 
@@ -36,7 +36,7 @@ async function buildQueries(folder,question,voice) {
   // Performs the Text-to-Speech request
   const [response] = await client.synthesizeSpeech(request);
   // Write the binary audio content to a local file
-  await fs.writeFile(folder+'/'+question+'.mp3', response.audioContent, 'binary');
+  await fs.writeFile(folder+'/'+index+'_'+question.replace(/[^A-Z0-9]+/ig, "_").substring(0,30)+'.mp3', response.audioContent, 'binary');
   console.log('Audio content written to file: output-'+question+'.mp3');
   return
 }
@@ -82,8 +82,8 @@ app.post('/postqueries', async function (req, res) {
 	for(const assistant of assistants){
 		const subFolderName = assistant.assistant;
 		await fs.mkdir(`${outputs}/${folderName}/${subFolderName}`)
-		for (const query of queries) {
-			await buildQueries(`${outputs}/${folderName}/${subFolderName}`,`${assistant.ask} ${query}`,voice);
+		for (const [index,query] of queries.entries()) {
+			await queryBuilder(index,`${outputs}/${folderName}/${subFolderName}`,`${assistant.ask} ${query}`,voice);
 			await zip(`${outputs}/${folderName}`, `${outputs}/${folderName}.zip`);
 		}
 	}
