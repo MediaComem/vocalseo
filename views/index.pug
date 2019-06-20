@@ -36,7 +36,13 @@ block content
           .then(response => response.json())
           .then(body => {
             body.voices.forEach(function(element,key) {
-              languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
+              if(key == 4){
+                console.log(key)
+                languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key,true,true);
+              }else{
+                languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
+              }
+              
             });
           })
       }
