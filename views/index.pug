@@ -1,55 +1,68 @@
 extends default
 block content
   h1 Personnal assistants 🤖 || Queries builder
-  p This tool helps to build queries for 
+  p This tool helps to build queries for&nbsp;
     each val, index in assistants
       if index != assistants.length-1
         | #{val.assistant},&nbsp;
-      else 
+      else
         | #{val.assistant}.
   form(action="/postqueries" method="POST")
     .form-group
       label.form-label(for="textQueries") Queries (queries have to be semicolon separated)
       textarea.form-input(rows="20" cols="50" name="textQueries" placeholder='First query; Second query;' required)
     .form-group.col-3.col-sm-12
-      label.form-label(for="languageCode") Language Code
-      select.form-select(name='LanguageCode' id='languageCode')
+      label.form-label(for="LanguageCode") Language Code
+      select.form-select(name='LanguageCode' id='LanguageCode')
         option(value="fr") FR
         option(value="en") EN
     .form-group.col-3.col-sm-12
-      label.form-label(for="languageName") Voice Name (
+      label.form-label(for="VoicesName") Voice Name (
         a(href="https://cloud.google.com/text-to-speech/docs/voices") supported voices
         | )
-      select.form-select(name='LanguageName' id='languageName')
+      select.form-select(name='VoicesName' id='VoicesName')
     .divider
     button.btn(type="submit") Submit
 
   script(type="text/javascript").
     document.addEventListener("DOMContentLoaded", () => {
-      const languageCodeSelector = document.querySelector('#languageCode')
-      const languageNameSelector = document.querySelector('#languageName')
+      const LanguageCodeSelector = document.querySelector('#LanguageCode')
+      const VoicesSelector = document.querySelector('#VoicesName')
 
-      const getLanguages = (lang) => {
+      const getVoices = (lang) => {
         const url = new URL("/languages",window.location.href)
         url.searchParams.append('lang',lang)
         fetch(url)
           .then(response => response.json())
           .then(body => {
             body.voices.forEach(function(element,key) {
-              if(key == 4){
-                console.log(key)
-                languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key,true,true);
+              // Default to last selected voice or en-US-Wavenet-C FEMALE
+              let voice = localStorage.getItem('voice');
+              if((voice && key == voice) || (!voice && key == 13)){
+                VoicesSelector[key] = new Option(element.name+' '+element.ssmlGender,key,true,true);
               }else{
-                languageNameSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
+                VoicesSelector[key] = new Option(element.name+' '+element.ssmlGender,key);
               }
-              
+
             });
           })
       }
 
-      getLanguages(languageCodeSelector[0].value)
+      // Set language and look for associated voices
 
-      languageCodeSelector.addEventListener('change', (e) => { 
-        getLanguages(e.target.value)
+      let lang = localStorage.getItem('lang') || 'en'; // Default with last selected lang or english
+      // Save lang
+      document.querySelector('#LanguageCode [value="' + lang + '"]').selected = true;
+      localStorage.setItem('lang', lang);
+
+      getVoices(lang);
+
+      LanguageCodeSelector.addEventListener('change', (e) => {
+        localStorage.setItem('lang', e.target.value);
+        getVoices(e.target.value)
+      })
+
+      VoicesSelector.addEventListener('change', (e) => {
+        localStorage.setItem('voice', e.target.value);
       })
     })
