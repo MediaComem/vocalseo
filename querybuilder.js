@@ -5,10 +5,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const express = require('express');
 const app = express();
-const port = 3000;
 const { zip } = require('zip-a-folder');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
+require('dotenv').config();
 
 new CronJob('0 0 3 * * *', async function() {
   console.log(moment().format()+' Start CronJob to remove audio files generated');
@@ -17,10 +17,16 @@ new CronJob('0 0 3 * * *', async function() {
 
 const assistants = [{assistant:'Google',ask:'Ok Google,'},{assistant:'Alexa',ask:'Alexa,'},{assistant:'Siri',ask:'Hey Siri,'}];
 
-async function queryBuilder(index,folder,question,voice) {
-  // Creates a client
-  const client = new textToSpeech.TextToSpeechClient();
 
+const client = new textToSpeech.TextToSpeechClient({
+  projectId: 'vocalseo',
+  credentials: {
+    client_email: process.env.CLIENT_EMAIL,
+    private_key: process.env.PRIVATE_KEY.replace(/\\n/g, '\n')
+  }
+});
+
+async function queryBuilder(index,folder,question,voice) {
   // The text to synthesize
   const text = question;
 
@@ -43,7 +49,6 @@ async function queryBuilder(index,folder,question,voice) {
 
 async function listAvailableVoices(languageCode) {
   const textToSpeech = require('@google-cloud/text-to-speech');
-	const client = new textToSpeech.TextToSpeechClient();
 
 	const [result] = await client.listVoices({languageCode:languageCode});
 	const voices = result.voices;
@@ -102,4 +107,9 @@ const removeFiles = async (directory) => {
   }
 }
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+let server_port = process.env.PORT || 3000
+let node_env = process.env.NODE_ENV || 'development'
+
+removeFiles(`./outputs`);
+
+app.listen(server_port, () => console.log(`Example app listening on port ${server_port}!`));
