@@ -1,6 +1,5 @@
-const fetch = require('node-fetch');
-const textToSpeech = require('@google-cloud/text-to-speech');
-const util = require('util');
+require('dotenv').config();
+const tts =  require('@google-cloud/text-to-speech');
 const fs = require('fs-extra');
 const path = require('path');
 const express = require('express');
@@ -8,17 +7,15 @@ const app = express();
 const { zip } = require('zip-a-folder');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
-require('dotenv').config();
 
 new CronJob('0 0 3 * * *', async function() {
   console.log(moment().format()+' Start CronJob to remove audio files generated');
   await removeFiles('./outputs')
 }, null, true, 'Europe/Paris');
 
-const assistants = [{assistant:'Google',ask:'Ok Google,'},{assistant:'Alexa',ask:'Alexa,'},{assistant:'Siri',ask:'Hey Siri,'}];
+const assistants = [{ assistant: 'Nest', ask: 'Hey Google,' }, {assistant:'Google',ask:'Ok Google,'},{assistant:'Alexa',ask:'Alexa,'},{assistant:'Siri',ask:'Hey Siri,'}];
 
-
-const client = new textToSpeech.TextToSpeechClient({
+const client = new tts.TextToSpeechClient({
   projectId: 'vocalseo',
   credentials: {
     client_email: process.env.CLIENT_EMAIL,
@@ -42,14 +39,12 @@ async function queryBuilder(index,folder,question,voice) {
   // Performs the Text-to-Speech request
   const [response] = await client.synthesizeSpeech(request);
   // Write the binary audio content to a local file
-  await fs.writeFile(folder+'/'+index+'_'+question.replace(/[^A-Z0-9]+/ig, "_").substring(0,30)+'.mp3', response.audioContent, 'binary');
+  await fs.writeFile(folder+'/'+index+'_'+question.replace(/[^A-Z0-9]+/ig, "_").substring(0,255)+'.mp3', response.audioContent, 'binary');
   console.log('Audio content written to file: output-'+question+'.mp3');
   return
 }
 
 async function listAvailableVoices(languageCode) {
-  const textToSpeech = require('@google-cloud/text-to-speech');
-
 	const [result] = await client.listVoices({languageCode:languageCode});
 	const voices = result.voices;
 
@@ -79,7 +74,7 @@ app.post('/postqueries', async function (req, res) {
 	console.log(queries)
 	const outputs = 'outputs';
 	const voices = await listAvailableVoices(req.body.LanguageCode)
-	const voice = voices[req.body.LanguageName]
+  const voice = voices[req.body.VoicesName]
 	//Create main folder
 	const folderName = moment().format('YYYYMMDDhhmmssSS')
 	await fs.mkdir(`${outputs}/${folderName}`)
